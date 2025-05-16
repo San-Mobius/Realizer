@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": false,
+    "declaration": true,          // optional, for .d.ts files
+    "isolatedModules": true,
+    "composite": false,
+    "useDefineForClassFields": true,
+    "moduleDetection": "force",
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "types": ["node"]
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
+}
