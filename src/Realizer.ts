@@ -10,6 +10,9 @@ export function generateMultipleFunctionsFromJson(plans: NamedActionPlan[]): str
   const indent = (level: number) => '  '.repeat(level);
 
   const resolveArg = (arg: ActionArg): string => {
+    if (typeof arg === 'string' && arg.startsWith("#")) {
+      return `vars["${arg.slice(1)}"]`;
+    }
     if (typeof arg === 'object') {
       if ('getVar' in arg) return `vars["${arg.getVar}"]`;
       if ('setVar' in arg) return `vars["${arg.setVar}"] = ${resolveArg(arg.value)}`;
@@ -28,7 +31,9 @@ export function generateMultipleFunctionsFromJson(plans: NamedActionPlan[]): str
           add: "+",
           subtract: "-",
           multiply: "*",
-          divide: "/"
+          divide: "/",
+          mod: "%",
+          power: "**",
         };
         const left = resolveArg(action.args[0]);
         const right = resolveArg(action.args[1]);

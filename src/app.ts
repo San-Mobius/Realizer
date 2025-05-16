@@ -23,6 +23,12 @@ const plans: NamedActionPlan[] = [
         resultVar: "total"
       },
       {
+        type: "math",
+        op: "add",
+        args: ["#total", 10],
+        resultVar: "total"
+      },
+      {
         type: "utility",
         op: "log",
         args: [{ getVar: "total" }]
