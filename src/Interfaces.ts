@@ -77,7 +77,3 @@ export type Instruction =
   | IfInstruction
   | LoopInstruction
   | ReturnInstruction;
-
-export interface Program {
-  program: Instruction[];
-}
