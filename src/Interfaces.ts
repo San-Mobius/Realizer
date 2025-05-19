@@ -1,6 +1,6 @@
 // types.ts
 
-export type Arg = string | number | boolean;
+export type Arg = string | number | boolean | Array<Arg>;
 
 export interface ConstInstruction {
   op: "const";

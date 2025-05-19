@@ -74,64 +74,44 @@ const plans: NamedProgram[] = [
     ]
   },
   {
-    name: "func2",
+    "name": "funcWithLoop",
     "program": [
-      {
-        "op": "const",
-        "target": "a",
-        "value": 10
-      },
-      {
-        "op": "const",
-        "target": "b",
-        "value": 5
-      },
+    {
+      "op": "const",
+      "target": "arr",
+      "value": [1, 2, 3, 4, 5]
+    },
+    {
+      "op": "const",
+      "target": "sum",
+      "value": 0
+    },
+    {
+    "op": "loop",
+    condition: {
+        op: "eq",
+        args: ["sum", 5]
+    },
+    "body": [
       {
         "op": "add",
         "target": "sum",
-        "args": ["a", "b"]
+        "args": ["sum", "i"]
       },
       {
         "op": "log",
         "args": ["sum"]
-      },
-      {
-        "op": "if",
-        "condition": {
-          "op": "gt",
-          "args": ["sum", 10]
-        },
-        "then": [
-          {
-            "op": "set_style",
-            "selector": "#box",
-            "style": {
-              "backgroundColor": "green"
-            }
-          },
-          {
-            "op": "log",
-            "args": ["'sum is greater than 10'"]
-          }
-        ],
-        "else": [
-          {
-            "op": "set_style",
-            "selector": "#box",
-            "style": {
-              "backgroundColor": "red"
-            }
-          },
-          {
-            "op": "log",
-            "args": ["'sum is less than or equal to 10'"]
-          }
-        ]
-      },
-      {
-        "op": "return",
-        "value": "sum"
       }
+    ]
+    },
+    {
+      "op": "log",
+      "args": ["'Final sum is:'", "sum"]
+    },
+    {
+      "op": "return",
+      "value": "sum"
+    }
     ]
   }
 ]

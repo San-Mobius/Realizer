@@ -8,7 +8,7 @@
 
 // realizer.ts
 
-import { Instruction, NamedProgram } from "./Interfaces.js";
+import { Arg, Instruction, NamedProgram } from "./Interfaces.js";
 
 export function realizeToJavaScript(namedProgram: NamedProgram[]): string {
   if(namedProgram.length === 0) return "";
@@ -19,7 +19,7 @@ export function realizeToJavaScript(namedProgram: NamedProgram[]): string {
     out.push(createAction(programs.program, programs.name));
   })
 
-  return out.join("\n")
+  return out.join("\n\n")
 }
 
 
@@ -31,7 +31,7 @@ function createAction(program: Instruction[], actionName: string = "handler"): s
     out.push("  ".repeat(indent) + line);
   };
 
-  const renderArg = (arg: string | number | boolean): string => {
+  const renderArg = (arg: Arg): string => {
     if (typeof arg === "string") return `vars["${arg}"]`;
     return JSON.stringify(arg);
   };
