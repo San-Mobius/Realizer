@@ -2,100 +2,116 @@
 // Code Generator Function
 // ------------------------
 
-import { Action, ActionArg, NamedActionPlan } from "./Interfaces.js";
-
 // --- Assuming all interfaces from previous answer are already defined ---
 
-export function generateMultipleFunctionsFromJson(plans: NamedActionPlan[]): string {
-  const indent = (level: number) => '  '.repeat(level);
+// realizer.js
 
-  const resolveArg = (arg: ActionArg): string => {
-    if (typeof arg === 'string' && arg.startsWith("#")) {
-      return `vars["${arg.slice(1)}"]`;
-    }
-    if (typeof arg === 'object') {
-      if ('getVar' in arg) return `vars["${arg.getVar}"]`;
-      if ('setVar' in arg) return `vars["${arg.setVar}"] = ${resolveArg(arg.value)}`;
-      return JSON.stringify(arg);
-    }
+// realizer.ts
+
+import { Instruction, Program } from "./Interfaces.js";
+
+export function realizeToJavaScript(program: Program): string {
+  const out: string[] = [];
+  out.push("async function handler(vars = {}) {");
+
+  const emit = (line: string, indent = 1) => {
+    out.push("  ".repeat(indent) + line);
+  };
+
+  const renderArg = (arg: string | number | boolean): string => {
+    if (typeof arg === "string") return `vars["${arg}"]`;
     return JSON.stringify(arg);
   };
 
-  const convertAction = (action: Action, level: number = 1): string => {
-    const i = indent(level);
-    let code = '';
+  const compile = (instructions: Instruction[], indent = 1) => {
+     const opMap: Record<string, string> = {
+      add: "+",
+      sub: "-",
+      mul: "*",
+      div: "/",
+      eq: "==",
+      neq: "!=",
+      gt: ">",
+      lt: "<",
+      gte: ">=",
+      lte: "<="
+    };
+    for (const instr of instructions) {
+      switch (instr.op) {
+        case "const":
+          emit(`vars["${instr.target}"] = ${JSON.stringify(instr.value)};`, indent);
+          break;
 
-    switch (action.type) {
-      case "math": {
-        const opMap: Record<string, string> = {
-          add: "+",
-          subtract: "-",
-          multiply: "*",
-          divide: "/",
-          mod: "%",
-          power: "**",
-        };
-        const left = resolveArg(action.args[0]);
-        const right = resolveArg(action.args[1]);
-        code += `${i}vars["${action.resultVar}"] = ${left} ${opMap[action.op]} ${right};\n`;
-        break;
-      }
+        case "copy":
+          emit(`vars["${instr.target}"] = vars["${instr.source}"];`, indent);
+          break;
 
-      case "logic": {
-        if (action.op === "if") {
-          const cond = `${resolveArg(action.condition.args[0])} ${action.condition.op} ${resolveArg(action.condition.args[1])}`;
-          code += `${i}if (${cond}) {\n`;
-          for (const a of action.then) {
-            code += convertAction(a, level + 1);
+        case "add":
+        case "sub":
+        case "mul":
+        case "div":
+        case "eq":
+        case "neq":
+        case "gt":
+        case "lt":
+        case "gte":
+        case "lte": {
+          const [a1, a2] = instr.args;
+          emit(`vars["${instr.target}"] = ${renderArg(a1)} ${opMap[instr.op]} ${renderArg(a2)};`, indent);
+          break;
+        }
+
+        case "log":
+          emit(`console.log(${instr.args.map(renderArg).join(", ")});`, indent);
+          break;
+
+        case "set_style": {
+          const entries = Object.entries(instr.style);
+          for (const [prop, val] of entries) {
+            emit(`document.querySelector("${instr.selector}")?.style.setProperty("${prop}", "${val}");`, indent);
           }
-          if (action.else) {
-            code += `${i}} else {\n`;
-            for (const a of action.else) {
-              code += convertAction(a, level + 1);
-            }
+          break;
+        }
+
+        case "fetch":
+          emit(`vars["${instr.target}"] = await fetch("${instr.url}", ${JSON.stringify(instr.options || {})});`, indent);
+          break;
+
+        case "if":
+          emit(
+            `if (${renderArg(instr.condition.args[0])} ${opMap[instr.condition.op]} ${renderArg(instr.condition.args[1])}) {`,
+            indent
+          );
+          compile(instr.then, indent + 1);
+          if (instr.else) {
+            emit(`} else {`, indent);
+            compile(instr.else, indent + 1);
           }
-          code += `${i}}\n`;
-        }
-        break;
-      }
+          emit(`}`, indent);
+          break;
 
-      case "action": {
-        if (action.op === "setStyle") {
-          const [selector, styles] = action.args;
-          const styleSet = Object.entries(styles)
-            .map(([key, value]) => `el.style.${key} = "${value}";`)
-            .join(" ");
-          code += `${i}{ const el = document.querySelector(${JSON.stringify(selector)}); if (el) { ${styleSet} } }\n`;
-        }
-        break;
-      }
+        case "loop":
+          emit(
+            `while (${renderArg(instr.condition.args[0])} ${opMap[instr.condition.op]} ${renderArg(instr.condition.args[1])}) {`,
+            indent
+          );
+          compile(instr.body, indent + 1);
+          emit(`}`, indent);
+          break;
 
-      case "utility": {
-        if (action.op === "log") {
-          const val = resolveArg(action.args[0]);
-          code += `${i}console.log(${val});\n`;
-        }
-        break;
-      }
+        case "return":
+          emit(`return ${renderArg(instr.value)};`, indent);
+          break;
 
-      default:
-        //@ts-ignore
-        code += `${i}// Unknown action type: ${action.type}\n`;
+        default:
+          emit(`// unknown instruction: ${JSON.stringify(instr)}`, indent);
+      }
     }
-
-    return code;
   };
 
-  const allFunctions = plans.map(plan => {
-    const funcName = `execute${plan.name[0].toUpperCase()}${plan.name.slice(1)}`;
-    const body = plan.actions.map(action => convertAction(action)).join('');
-    return `
-function ${funcName}(vars = {}) {
-${body}
-  return vars;
-}
-`.trim();
-  });
+  compile(program.program);
+  out.push("}");
 
-  return allFunctions.join('\n\n');
+  return out.join("\n");
 }
+

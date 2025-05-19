@@ -2,64 +2,79 @@
 // Example Usage
 // ------------------------
 
-import { NamedActionPlan } from "./Interfaces.js";
-import { generateMultipleFunctionsFromJson } from "./Realizer.js";
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from 'url';
+import { Program } from "./Interfaces.js";
+import { realizeToJavaScript } from './Realizer.js'; // ✅ required in ESM
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const plans: NamedActionPlan[] = [
-  {
-    name: "addNumbers",
-    version: 1,
-    actions: [
-      {
-        type: "math",
-        op: "add",
-        args: [2, 3],
-        resultVar: "total"
+const plans: Program = {
+  "program": [
+    {
+      "op": "const",
+      "target": "a",
+      "value": 10
+    },
+    {
+      "op": "const",
+      "target": "b",
+      "value": 5
+    },
+    {
+      "op": "add",
+      "target": "sum",
+      "args": ["a", "b"]
+    },
+    {
+      "op": "log",
+      "args": ["sum"]
+    },
+    {
+      "op": "if",
+      "condition": {
+        "op": "gt",
+        "args": ["sum", 10]
       },
-      {
-        type: "math",
-        op: "add",
-        args: ["#total", 10],
-        resultVar: "total"
-      },
-      {
-        type: "utility",
-        op: "log",
-        args: [{ getVar: "total" }]
-      }
-    ]
-  },
-  {
-    name: "boxColorToggle",
-    version: 1,
-    actions: [
-      {
-        type: "logic",
-        op: "if",
-        condition: {
-          op: "==",
-          args: [1, 1]
-        },
-        then: [
-          {
-            type: "action",
-            op: "setStyle",
-            args: ["#box", { backgroundColor: "green" }]
+      "then": [
+        {
+          "op": "set_style",
+          "selector": "#box",
+          "style": {
+            "backgroundColor": "green"
           }
-        ]
-      }
-    ]
-  }
-];
+        },
+        {
+          "op": "log",
+          "args": ["'sum is greater than 10'"]
+        }
+      ],
+      "else": [
+        {
+          "op": "set_style",
+          "selector": "#box",
+          "style": {
+            "backgroundColor": "red"
+          }
+        },
+        {
+          "op": "log",
+          "args": ["'sum is less than or equal to 10'"]
+        }
+      ]
+    },
+    {
+      "op": "return",
+      "value": "sum"
+    }
+  ]
+}
+
 
 console.log("Generating JS code from JSON plans...");
-let js = generateMultipleFunctionsFromJson(plans);
+let js = realizeToJavaScript(plans);
 
 function writeJsToFile(jsCode: string, filename: string = "build.js") {
   const outputDir = path.join(__dirname, "..", "output");

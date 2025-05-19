@@ -1,69 +1,78 @@
-// ------------------------
-// Typescript Interfaces
-// ------------------------
+// types.ts
 
-export type ArgValue = string | number | boolean | ArgGetVar | ArgSetVar;
+export type Arg = string | number | boolean;
 
-export interface NamedActionPlan extends ActionPlan {
-  name: string; // unique function name like "fileUploader", "submitForm"
+export interface ConstInstruction {
+  op: "const";
+  target: string;
+  value: Arg;
 }
 
-export interface ArgGetVar {
-  getVar: string;
+export interface CopyInstruction {
+  op: "copy";
+  source: string;
+  target: string;
 }
 
-export interface ArgSetVar {
-  setVar: string;
-  value: ArgValue;
+export interface BinaryOpInstruction {
+  op: "add" | "sub" | "mul" | "div" | "eq" | "neq" | "gt" | "lt" | "gte" | "lte";
+  target: string;
+  args: [Arg, Arg];
 }
 
-export type ActionArg = ArgValue | Record<string, any>;
-
-export interface BaseAction {
-  type: string;
-  op: string;
-  condition?: LogicCondition;
-  resultVar?: string;
-  next?: Action | Action[];
-}
-
-export interface MathAction extends BaseAction {
-  type: "math";
-  op: "add" | "subtract" | "multiply" | "divide";
-  args: [ArgValue, ArgValue];
-  resultVar: string;
-}
-
-export interface LogicCondition {
-  op: "==" | "!=" | ">" | "<" | ">=" | "<=";
-  args: [ArgValue, ArgValue];
-}
-
-export interface LogicAction extends BaseAction {
-  type: "logic";
-  op: "if";
-  condition: LogicCondition;
-  then: Action[];
-  else?: Action[];
-}
-
-export interface DOMAction extends BaseAction {
-  type: "action";
-  op: "setStyle";
-  args: [string, Record<string, any>]; // selector, styles
-}
-
-export interface UtilityAction extends BaseAction {
-  type: "utility";
+export interface LogInstruction {
   op: "log";
-  args: ArgValue[];
+  args: Arg[];
 }
 
-export type Action = MathAction | LogicAction | DOMAction | UtilityAction;
+export interface SetStyleInstruction {
+  op: "set_style";
+  selector: string;
+  style: Record<string, string>;
+}
 
-export interface ActionPlan {
-  version: number;
-  scope?: "global" | "component";
-  actions: Action[];
-  debug?: boolean;
+export interface FetchInstruction {
+  op: "fetch";
+  url: string;
+  target: string;
+  options?: Record<string, any>;
+}
+
+export interface IfInstruction {
+  op: "if";
+  condition: {
+    op: "eq" | "neq" | "gt" | "lt" | "gte" | "lte";
+    args: [Arg, Arg];
+  };
+  then: Instruction[];
+  else?: Instruction[];
+}
+
+export interface LoopInstruction {
+  op: "loop";
+  condition: {
+    op: "eq" | "neq" | "gt" | "lt" | "gte" | "lte";
+    args: [Arg, Arg];
+  };
+  body: Instruction[];
+}
+
+export interface ReturnInstruction {
+  op: "return";
+  value: Arg;
+}
+
+export type Instruction =
+  | ConstInstruction
+  | CopyInstruction
+  | BinaryOpInstruction
+  | LogInstruction
+  | SetStyleInstruction
+  | FetchInstruction
+  | IfInstruction
+  | LoopInstruction
+  | ReturnInstruction;
+
+export interface Program {
+  program: Instruction[];
 }
