@@ -113,6 +113,58 @@ const plans: NamedProgram[] = [
       "value": "sum"
     }
     ]
+  },
+  {
+  "name": "complexConditionExample",
+  "program": [
+    {
+      "op": "const",
+      "target": "a",
+      "value": 10
+    },
+    {
+      "op": "const",
+      "target": "b",
+      "value": 5
+    },
+    {
+      "op": "if",
+      "condition": {
+        "op": "or",
+        "args": [
+          {
+            "op": "and",
+            "args": [
+              {
+                "op": "gt",
+                "args": ["a", "b"]
+              },
+              {
+                "op": "eq",
+                "args": ["b", 5]
+              }
+            ]
+          },
+          {
+            "op": "gt",
+            "args": ["b", "a"]
+          }
+        ]
+      },
+      "then": [
+        {
+          "op": "log",
+          "args": ["'Complex condition evaluated to true'"]
+        }
+      ],
+      "else": [
+        {
+          "op": "log",
+          "args": ["'Complex condition evaluated to false'"]
+        }
+      ]
+    }
+  ]
   }
 ]
 

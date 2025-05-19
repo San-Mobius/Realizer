@@ -8,7 +8,7 @@
 
 // realizer.ts
 
-import { Arg, Instruction, NamedProgram } from "./Interfaces.js";
+import { Arg, Condition, Instruction, NamedProgram } from "./Interfaces.js";
 
 export function realizeToJavaScript(namedProgram: NamedProgram[]): string {
   if(namedProgram.length === 0) return "";
@@ -36,20 +36,41 @@ function createAction(program: Instruction[], actionName: string = "handler"): s
     return JSON.stringify(arg);
   };
 
+  function renderCondition(cond: Condition): string {
+    switch (cond.op) {
+      case "eq":
+      case "neq":
+      case "gt":
+      case "lt":
+      case "gte":
+      case "lte":
+        return `${renderArg(cond.args[0])} ${opMap[cond.op]} ${renderArg(cond.args[1])}`;
+      case "and":
+      case "or":
+        return cond.args.map(renderCondition).map(c => `(${c})`).join(` ${cond.op === "and" ? "&&" : "||"} `);
+      case "group":
+        return `(${renderCondition(cond.condition)})`;
+      default:
+        throw new Error(`Unknown condition op: ${(cond as any).op}`);
+    }
+  }
+
+
+  const opMap: Record<string, string> = {
+    add: "+",
+    sub: "-",
+    mul: "*",
+    div: "/",
+    eq: "==",
+    neq: "!=",
+    gt: ">",
+    lt: "<",
+    gte: ">=",
+    lte: "<=",
+  };
+
+
   const compile = (instructions: Instruction[], indent = 1) => {
-    
-    const opMap: Record<string, string> = {
-      add: "+",
-      sub: "-",
-      mul: "*",
-      div: "/",
-      eq: "==",
-      neq: "!=",
-      gt: ">",
-      lt: "<",
-      gte: ">=",
-      lte: "<=",
-    };
 
     for (const instr of instructions) {
       switch (instr.op) {
@@ -106,12 +127,7 @@ function createAction(program: Instruction[], actionName: string = "handler"): s
           break;
 
         case "if":
-          emit(
-            `if (${renderArg(instr.condition.args[0])} ${
-              opMap[instr.condition.op]
-            } ${renderArg(instr.condition.args[1])}) {`,
-            indent
-          );
+          emit(`if (${renderCondition(instr.condition)}) {`, indent);
           compile(instr.then, indent + 1);
           if (instr.else) {
             emit(`} else {`, indent);

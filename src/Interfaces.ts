@@ -38,14 +38,28 @@ export interface FetchInstruction {
   options?: Record<string, any>;
 }
 
+export interface BinaryCondition {
+op: "eq" | "neq" | "gt" | "lt" | "gte" | "lte";
+args: [Arg, Arg];
+}
+
+export interface LogicalCondition {
+op: "and" | "or";
+args: Condition[]; // recursive: multiple conditions
+}
+
+export interface GroupedCondition {
+op: "group";
+condition: Condition;
+}
+
+export type Condition = BinaryCondition | LogicalCondition | GroupedCondition;
+
 export interface IfInstruction {
-  op: "if";
-  condition: {
-    op: "eq" | "neq" | "gt" | "lt" | "gte" | "lte";
-    args: [Arg, Arg];
-  };
-  then: Instruction[];
-  else?: Instruction[];
+op: "if";
+condition: Condition;
+then: Instruction[];
+else?: Instruction[];
 }
 
 export interface LoopInstruction {
