@@ -62,6 +62,11 @@ export interface ReturnInstruction {
   value: Arg;
 }
 
+export interface NamedProgram {
+  name: string;
+  program: Instruction[];
+}
+
 export type Instruction =
   | ConstInstruction
   | CopyInstruction

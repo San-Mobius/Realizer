@@ -5,72 +5,136 @@
 import * as fs from "fs";
 import * as path from "path";
 import { fileURLToPath } from 'url';
-import { Program } from "./Interfaces.js";
+import { NamedProgram } from "./Interfaces.js";
 import { realizeToJavaScript } from './Realizer.js'; // ✅ required in ESM
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const plans: Program = {
-  "program": [
-    {
-      "op": "const",
-      "target": "a",
-      "value": 10
-    },
-    {
-      "op": "const",
-      "target": "b",
-      "value": 5
-    },
-    {
-      "op": "add",
-      "target": "sum",
-      "args": ["a", "b"]
-    },
-    {
-      "op": "log",
-      "args": ["sum"]
-    },
-    {
-      "op": "if",
-      "condition": {
-        "op": "gt",
-        "args": ["sum", 10]
+const plans: NamedProgram[] = [
+  {
+    name: "func1",
+    "program": [
+      {
+        "op": "const",
+        "target": "a",
+        "value": 10
       },
-      "then": [
-        {
-          "op": "set_style",
-          "selector": "#box",
-          "style": {
-            "backgroundColor": "green"
-          }
+      {
+        "op": "const",
+        "target": "b",
+        "value": 5
+      },
+      {
+        "op": "add",
+        "target": "sum",
+        "args": ["a", "b"]
+      },
+      {
+        "op": "log",
+        "args": ["sum"]
+      },
+      {
+        "op": "if",
+        "condition": {
+          "op": "gt",
+          "args": ["sum", 10]
         },
-        {
-          "op": "log",
-          "args": ["'sum is greater than 10'"]
-        }
-      ],
-      "else": [
-        {
-          "op": "set_style",
-          "selector": "#box",
-          "style": {
-            "backgroundColor": "red"
+        "then": [
+          {
+            "op": "set_style",
+            "selector": "#box",
+            "style": {
+              "backgroundColor": "green"
+            }
+          },
+          {
+            "op": "log",
+            "args": ["'sum is greater than 10'"]
           }
+        ],
+        "else": [
+          {
+            "op": "set_style",
+            "selector": "#box",
+            "style": {
+              "backgroundColor": "red"
+            }
+          },
+          {
+            "op": "log",
+            "args": ["'sum is less than or equal to 10'"]
+          }
+        ]
+      },
+      {
+        "op": "return",
+        "value": "sum"
+      }
+    ]
+  },
+  {
+    name: "func2",
+    "program": [
+      {
+        "op": "const",
+        "target": "a",
+        "value": 10
+      },
+      {
+        "op": "const",
+        "target": "b",
+        "value": 5
+      },
+      {
+        "op": "add",
+        "target": "sum",
+        "args": ["a", "b"]
+      },
+      {
+        "op": "log",
+        "args": ["sum"]
+      },
+      {
+        "op": "if",
+        "condition": {
+          "op": "gt",
+          "args": ["sum", 10]
         },
-        {
-          "op": "log",
-          "args": ["'sum is less than or equal to 10'"]
-        }
-      ]
-    },
-    {
-      "op": "return",
-      "value": "sum"
-    }
-  ]
-}
+        "then": [
+          {
+            "op": "set_style",
+            "selector": "#box",
+            "style": {
+              "backgroundColor": "green"
+            }
+          },
+          {
+            "op": "log",
+            "args": ["'sum is greater than 10'"]
+          }
+        ],
+        "else": [
+          {
+            "op": "set_style",
+            "selector": "#box",
+            "style": {
+              "backgroundColor": "red"
+            }
+          },
+          {
+            "op": "log",
+            "args": ["'sum is less than or equal to 10'"]
+          }
+        ]
+      },
+      {
+        "op": "return",
+        "value": "sum"
+      }
+    ]
+  }
+]
 
 
 console.log("Generating JS code from JSON plans...");

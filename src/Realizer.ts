@@ -8,11 +8,24 @@
 
 // realizer.ts
 
-import { Instruction, Program } from "./Interfaces.js";
+import { Instruction, NamedProgram } from "./Interfaces.js";
 
-export function realizeToJavaScript(program: Program): string {
+export function realizeToJavaScript(namedProgram: NamedProgram[]): string {
+  if(namedProgram.length === 0) return "";
+  
   const out: string[] = [];
-  out.push("async function handler(vars = {}) {");
+  
+  namedProgram.forEach((programs:NamedProgram) => {
+    out.push(createAction(programs.program, programs.name));
+  })
+
+  return out.join("\n")
+}
+
+
+function createAction(program: Instruction[], actionName: string = "handler"): string {
+  const out: string[] = [];
+  out.push(`async function ${actionName}(vars = {}) {`);
 
   const emit = (line: string, indent = 1) => {
     out.push("  ".repeat(indent) + line);
@@ -24,7 +37,8 @@ export function realizeToJavaScript(program: Program): string {
   };
 
   const compile = (instructions: Instruction[], indent = 1) => {
-     const opMap: Record<string, string> = {
+    
+    const opMap: Record<string, string> = {
       add: "+",
       sub: "-",
       mul: "*",
@@ -34,18 +48,23 @@ export function realizeToJavaScript(program: Program): string {
       gt: ">",
       lt: "<",
       gte: ">=",
-      lte: "<="
+      lte: "<=",
     };
+
     for (const instr of instructions) {
       switch (instr.op) {
         case "const":
-          emit(`vars["${instr.target}"] = ${JSON.stringify(instr.value)};`, indent);
+          emit(
+            `vars["${instr.target}"] = ${JSON.stringify(instr.value)};`,
+            indent
+          );
           break;
 
         case "copy":
           emit(`vars["${instr.target}"] = vars["${instr.source}"];`, indent);
           break;
 
+        // All the operations -----------------
         case "add":
         case "sub":
         case "mul":
@@ -57,9 +76,10 @@ export function realizeToJavaScript(program: Program): string {
         case "gte":
         case "lte": {
           const [a1, a2] = instr.args;
-          emit(`vars["${instr.target}"] = ${renderArg(a1)} ${opMap[instr.op]} ${renderArg(a2)};`, indent);
+          emit(`vars["${instr.target}"] = ${renderArg(a1)} ${opMap[instr.op]} ${renderArg(a2)};`,indent);
           break;
         }
+        // -----------------
 
         case "log":
           emit(`console.log(${instr.args.map(renderArg).join(", ")});`, indent);
@@ -68,18 +88,28 @@ export function realizeToJavaScript(program: Program): string {
         case "set_style": {
           const entries = Object.entries(instr.style);
           for (const [prop, val] of entries) {
-            emit(`document.querySelector("${instr.selector}")?.style.setProperty("${prop}", "${val}");`, indent);
+            emit(
+              `document.querySelector("${instr.selector}")?.style.setProperty("${prop}", "${val}");`,
+              indent
+            );
           }
           break;
         }
 
         case "fetch":
-          emit(`vars["${instr.target}"] = await fetch("${instr.url}", ${JSON.stringify(instr.options || {})});`, indent);
+          emit(
+            `vars["${instr.target}"] = await fetch("${
+              instr.url
+            }", ${JSON.stringify(instr.options || {})});`,
+            indent
+          );
           break;
 
         case "if":
           emit(
-            `if (${renderArg(instr.condition.args[0])} ${opMap[instr.condition.op]} ${renderArg(instr.condition.args[1])}) {`,
+            `if (${renderArg(instr.condition.args[0])} ${
+              opMap[instr.condition.op]
+            } ${renderArg(instr.condition.args[1])}) {`,
             indent
           );
           compile(instr.then, indent + 1);
@@ -92,7 +122,9 @@ export function realizeToJavaScript(program: Program): string {
 
         case "loop":
           emit(
-            `while (${renderArg(instr.condition.args[0])} ${opMap[instr.condition.op]} ${renderArg(instr.condition.args[1])}) {`,
+            `while (${renderArg(instr.condition.args[0])} ${
+              opMap[instr.condition.op]
+            } ${renderArg(instr.condition.args[1])}) {`,
             indent
           );
           compile(instr.body, indent + 1);
@@ -109,9 +141,8 @@ export function realizeToJavaScript(program: Program): string {
     }
   };
 
-  compile(program.program);
+  compile(program);
   out.push("}");
 
   return out.join("\n");
 }
-
